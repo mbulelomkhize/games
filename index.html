@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sorting Game Hub</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial;
+}
+
+body {
+  background: linear-gradient(to right, #0f172a, #1e293b);
+  color: white;
+  text-align: center;
+  padding: 30px;
+}
+
+.container {
+  max-width: 1000px;
+  margin: auto;
+  padding: 30px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.05);
+}
+
+/* MENU */
+.menu {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.card {
+  padding: 25px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 15px;
+  cursor: pointer;
+  transition: 0.3s;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  background: rgba(168,85,247,0.3);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+
+/* BARS */
+#bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 320px;
+  margin: 20px;
+  gap: 10px;
+}
+
+.bar {
+  width: 40px;
+  background: linear-gradient(to top, #38bdf8, #6366f1);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  border-radius: 10px;
+  transition: all 0.4s ease;
+}
+
+.bar:hover {
+  transform: scale(1.1);
+}
+
+.highlight {
+  background: #a855f7 !important;
+}
+
+.pivot {
+  background: orange !important;
+}
+
+/* BUTTONS */
+button {
+  padding: 12px 25px;
+  margin: 10px;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.yes { background: #22c55e; color: white; }
+.no { background: #ef4444; color: white; }
+.start { background: #3b82f6; color: white; }
+.back { background: gray; color: white; }
+
+</style>
+</head>
+
+<body>
+
+<!-- HOME SCREEN -->
+<div id="homeScreen" class="container">
+  <h1>🎮 Sorting Game Hub</h1>
+  <p>Choose your challenge</p>
+
+  <div class="menu">
+    <div class="card" onclick="openGame('bubble')">Bubble Sort</div>
+    <div class="card" onclick="openGame('selection')">Selection Sort</div>
+    <div class="card" onclick="openGame('insertion')">Insertion Sort</div>
+    <div class="card" onclick="openGame('quick')">Quick Sort ⚡</div>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="gameScreen" class="container" style="display:none;">
+  <h1 id="gameTitle"></h1>
+
+  <p>⏱ Time: <span id="timer">0</span>s</p>
+
+  <div id="bars"></div>
+
+  <button class="start" onclick="startGame()">Start</button>
+
+  <br>
+  <button class="yes" onclick="checkAnswer(true)">YES</button>
+  <button class="no" onclick="checkAnswer(false)">NO</button>
+
+  <br><br>
+  <button class="back" onclick="goHome()">⬅ Back</button>
+
+  <p id="message"></p>
+</div>
+
+<script>
+
+let numbers = [];
+let currentIndex = 0;
+let swappedInPass = false;
+let timer = 0;
+let interval;
+let algorithm = "bubble";
+let pivotIndex = 0;
+
+const bars = document.getElementById("bars");
+const timerText = document.getElementById("timer");
+const message = document.getElementById("message");
+
+// NAVIGATION
+function openGame(algo) {
+  document.getElementById("homeScreen").style.display = "none";
+  document.getElementById("gameScreen").style.display = "block";
+
+  algorithm = algo;
+
+  document.getElementById("gameTitle").textContent =
+    algo.toUpperCase() + " SORT GAME";
+}
+
+function goHome() {
+  document.getElementById("gameScreen").style.display = "none";
+  document.getElementById("homeScreen").style.display = "block";
+  clearInterval(interval);
+}
+
+// SETUP
+function randomNumbers() {
+  numbers = [];
+  for (let i = 0; i < 8; i++) {
+    numbers.push(Math.floor(Math.random() * 90) + 10);
+  }
+}
+
+function renderBars() {
+  bars.innerHTML = "";
+
+  numbers.forEach((num, i) => {
+    let bar = document.createElement("div");
+    bar.classList.add("bar");
+
+    if (i === currentIndex || i === currentIndex + 1) {
+      bar.classList.add("highlight");
+    }
+
+    if (algorithm === "quick" && i === pivotIndex) {
+      bar.classList.add("pivot");
+    }
+
+    bar.style.height = num * 3 + "px";
+    bar.textContent = num;
+
+    bars.appendChild(bar);
+  });
+}
+
+// START
+function startGame() {
+  clearInterval(interval);
+
+  timer = 0;
+  timerText.textContent = timer;
+
+  currentIndex = 0;
+  swappedInPass = false;
+
+  randomNumbers();
+
+  if (algorithm === "quick") {
+    pivotIndex = numbers.length - 1;
+  }
+
+  renderBars();
+
+  interval = setInterval(() => {
+    timer++;
+    timerText.textContent = timer;
+  }, 1000);
+
+  message.textContent = "Game Started (" + algorithm + ")";
+}
+
+// GAME LOGIC
+function checkAnswer(choice) {
+
+  let correct = false;
+
+  // BUBBLE
+  if (algorithm === "bubble") {
+    let a = numbers[currentIndex];
+    let b = numbers[currentIndex + 1];
+
+    correct = a > b;
+
+    if (choice && correct) {
+      [numbers[currentIndex], numbers[currentIndex + 1]] =
+      [numbers[currentIndex + 1], numbers[currentIndex]];
+    }
+  }
+
+  // SELECTION
+  else if (algorithm === "selection") {
+    let min = currentIndex;
+
+    for (let i = currentIndex + 1; i < numbers.length; i++) {
+      if (numbers[i] < numbers[min]) {
+        min = i;
+      }
+    }
+
+    correct = (min !== currentIndex);
+
+    if (choice && correct) {
+      [numbers[currentIndex], numbers[min]] =
+      [numbers[min], numbers[currentIndex]];
+    }
+  }
+
+  // INSERTION
+  else if (algorithm === "insertion") {
+    let key = numbers[currentIndex];
+    let j = currentIndex - 1;
+
+    correct = j >= 0 && numbers[j] > key;
+
+    if (choice && correct) {
+      numbers[j + 1] = numbers[j];
+      numbers[j] = key;
+      currentIndex--;
+    }
+  }
+
+  // QUICK (simplified)
+  else if (algorithm === "quick") {
+    let pivot = numbers[pivotIndex];
+    let current = numbers[currentIndex];
+
+    correct = current < pivot;
+
+    if (choice && correct) {
+      [numbers[currentIndex], numbers[pivotIndex - 1]] =
+      [numbers[pivotIndex - 1], numbers[currentIndex]];
+
+      pivotIndex--;
+    }
+  }
+
+  // CHECK
+  if (choice === correct) {
+    message.textContent = "✅ Correct";
+  } else {
+    timer += 2;
+    message.textContent = "❌ Wrong (+2s)";
+  }
+
+  currentIndex++;
+
+  // END
+  if (currentIndex >= numbers.length - 1) {
+    clearInterval(interval);
+    message.textContent += " | Finished!";
+    renderBars();
+    return;
+  }
+
+  renderBars();
+}
+
+</script>
+
+</body>
+</html>
